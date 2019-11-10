@@ -2,7 +2,7 @@ package utils;
 
 import java.util.ArrayList;
 
-import entity.PeriodicTask;
+import entity.PeriodicIOTask;
 
 public class AnalysisUtils {
 	public static final int MAX_PRIORITY = 1000;
@@ -19,8 +19,8 @@ public class AnalysisUtils {
 		DOUBLE_PARTITIONS, /* partitions * 2 us */
 	};
 
-	public ArrayList<ArrayList<PeriodicTask>> permutePartition(ArrayList<PeriodicTask> tasks) {
-		ArrayList<ArrayList<PeriodicTask>> list = new ArrayList<>();
+	public ArrayList<ArrayList<PeriodicIOTask>> permutePartition(ArrayList<PeriodicIOTask> tasks) {
+		ArrayList<ArrayList<PeriodicIOTask>> list = new ArrayList<>();
 		backtrack(list, new ArrayList<>(), tasks);
 		return list;
 	}
@@ -32,7 +32,7 @@ public class AnalysisUtils {
 	// return list;
 	// }
 
-	private void backtrack(ArrayList<ArrayList<PeriodicTask>> list, ArrayList<PeriodicTask> tempList, ArrayList<PeriodicTask> nums) {
+	private void backtrack(ArrayList<ArrayList<PeriodicIOTask>> list, ArrayList<PeriodicIOTask> tempList, ArrayList<PeriodicIOTask> nums) {
 		if (tempList.size() == nums.size()) {
 			list.add(new ArrayList<>(tempList));
 		} else {
@@ -46,17 +46,17 @@ public class AnalysisUtils {
 		}
 	}
 
-	public long[][] initResponseTime(ArrayList<ArrayList<PeriodicTask>> tasks) {
+	public long[][] initResponseTime(ArrayList<ArrayList<PeriodicIOTask>> tasks) {
 		long[][] response_times = new long[tasks.size()][];
 
 		for (int i = 0; i < tasks.size(); i++) {
-			ArrayList<PeriodicTask> task_on_a_partition = tasks.get(i);
+			ArrayList<PeriodicIOTask> task_on_a_partition = tasks.get(i);
 			task_on_a_partition.sort((t1, t2) -> -Integer.compare(t1.priority, t2.priority));
 
 			long[] Ri = new long[task_on_a_partition.size()];
 
 			for (int j = 0; j < task_on_a_partition.size(); j++) {
-				PeriodicTask t = task_on_a_partition.get(j);
+				PeriodicIOTask t = task_on_a_partition.get(j);
 				Ri[j] = t.Ri = t.WCET + t.pure_resource_execution_time;
 				t.total = 0;
 
@@ -66,7 +66,7 @@ public class AnalysisUtils {
 		return response_times;
 	}
 
-	public boolean isSystemSchedulable(ArrayList<ArrayList<PeriodicTask>> tasks, long[][] Ris) {
+	public boolean isSystemSchedulable(ArrayList<ArrayList<PeriodicIOTask>> tasks, long[][] Ris) {
 		for (int i = 0; i < tasks.size(); i++) {
 			for (int j = 0; j < tasks.get(i).size(); j++) {
 				if (tasks.get(i).get(j).deadline < Ris[i][j])
@@ -93,7 +93,7 @@ public class AnalysisUtils {
 		return false;
 	}
 
-	public void printResponseTime(long[][] Ris, ArrayList<ArrayList<PeriodicTask>> tasks) {
+	public void printResponseTime(long[][] Ris, ArrayList<ArrayList<PeriodicIOTask>> tasks) {
 
 		for (int i = 0; i < Ris.length; i++) {
 			for (int j = 0; j < Ris[i].length; j++) {
@@ -106,7 +106,7 @@ public class AnalysisUtils {
 		}
 	}
 
-	public int compareSlack(PeriodicTask t1, PeriodicTask t2, boolean withBTB) {
+	public int compareSlack(PeriodicIOTask t1, PeriodicIOTask t2, boolean withBTB) {
 		long slack1 = withBTB ? t1.addition_slack_BTB : t1.addition_slack;
 		long deadline1 = t1.deadline;
 

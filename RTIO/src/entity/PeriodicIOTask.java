@@ -3,31 +3,24 @@ package entity;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
-public class PeriodicTask {
-	public int priority;
+public class PeriodicIOTask {
+	public int id;
 	public long period;
 	public long deadline;
 	public long WCET;
-	public int partition;
-	public int id;
 	public double util;
-
-	public long pure_resource_execution_time = 0;
-	public long Ri = 0, spin = 0, interference = 0, local = 0, total = 0;
-
-	public ArrayList<Integer> resource_required_index;
-	public ArrayList<Integer> number_of_access_in_one_release;
-
-	public long addition_slack_BTB = 0;
-	public long addition_slack = 0;
-	public long spin_delay_by_preemptions = 0;
 	
+	public long delta;
+	public long start;
+	public double quality;
+	
+	public long Ri = 0;
 
-	public PeriodicTask(int priority, long t, long d, long c, int partition, int id) {
+	public PeriodicIOTask(int priority, long t, long d, long c, int partition, int id) {
 		this(priority, t, d, c, partition, id, -1);
 	}
 
-	public PeriodicTask(int priority, long t, long d, long c, int partition, int id, double util) {
+	public PeriodicIOTask(int priority, long t, long d, long c, int partition, int id, double util) {
 		this.priority = priority;
 		this.period = t;
 		this.WCET = c;

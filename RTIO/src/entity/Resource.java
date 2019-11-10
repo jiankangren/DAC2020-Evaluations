@@ -7,7 +7,7 @@ public class Resource {
 	public int id;
 	public long csl;
 
-	public ArrayList<PeriodicTask> requested_tasks;
+	public ArrayList<PeriodicIOTask> requested_tasks;
 	public ArrayList<Integer> partitions;
 	public ArrayList<Integer> ceiling;
 
@@ -27,11 +27,11 @@ public class Resource {
 				+ isGlobal;
 	}
 
-	public int getCeilingForProcessor(ArrayList<ArrayList<PeriodicTask>> tasks, int partition) {
+	public int getCeilingForProcessor(ArrayList<ArrayList<PeriodicIOTask>> tasks, int partition) {
 		int ceiling = -1;
 
 		for (int k = 0; k < tasks.get(partition).size(); k++) {
-			PeriodicTask task = tasks.get(partition).get(k);
+			PeriodicIOTask task = tasks.get(partition).get(k);
 
 			if (task.resource_required_index.contains(this.id - 1)) {
 				ceiling = task.priority > ceiling ? task.priority : ceiling;
@@ -41,11 +41,11 @@ public class Resource {
 		return ceiling;
 	}
 
-	public int getCeilingForProcessor(ArrayList<PeriodicTask> tasks) {
+	public int getCeilingForProcessor(ArrayList<PeriodicIOTask> tasks) {
 		int ceiling = -1;
 
 		for (int k = 0; k < tasks.size(); k++) {
-			PeriodicTask task = tasks.get(k);
+			PeriodicIOTask task = tasks.get(k);
 
 			if (task.resource_required_index.contains(this.id - 1)) {
 				ceiling = task.priority > ceiling ? task.priority : ceiling;

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import entity.Resource;
-import entity.PeriodicTask;
+import entity.PeriodicIOTask;
 import utils.AnalysisUtils.CS_LENGTH_RANGE;
 import utils.AnalysisUtils.RESOURCES_RANGE;
 
@@ -46,8 +46,8 @@ public class SimpleSystemGenerator {
 	 * generate task sets for multiprocessor fully partitioned fixed-priority
 	 * system
 	 */
-	public ArrayList<PeriodicTask> generateTasks() {
-		ArrayList<PeriodicTask> tasks = null;
+	public ArrayList<PeriodicIOTask> generateTasks() {
+		ArrayList<PeriodicIOTask> tasks = null;
 		while (tasks == null) {
 			tasks = generateT();
 			if (tasks != null && WorstFitAllocation(tasks, total_partitions) == null)
@@ -57,16 +57,16 @@ public class SimpleSystemGenerator {
 	}
 
 	// It is protected to be used in subclass (nested system generator)
-	protected ArrayList<ArrayList<PeriodicTask>> WorstFitAllocation(ArrayList<PeriodicTask> tasksToAllocate, int partitions) {
+	protected ArrayList<ArrayList<PeriodicIOTask>> WorstFitAllocation(ArrayList<PeriodicIOTask> tasksToAllocate, int partitions) {
 		// clear tasks' partitions
 		for (int i = 0; i < tasksToAllocate.size(); i++) {
 			tasksToAllocate.get(i).partition = -1;
 		}
 
 		// Init allocated tasks array
-		ArrayList<ArrayList<PeriodicTask>> tasks = new ArrayList<>();
+		ArrayList<ArrayList<PeriodicIOTask>> tasks = new ArrayList<>();
 		for (int i = 0; i < partitions; i++) {
-			ArrayList<PeriodicTask> task = new ArrayList<>();
+			ArrayList<PeriodicIOTask> task = new ArrayList<>();
 			tasks.add(task);
 		}
 
@@ -77,7 +77,7 @@ public class SimpleSystemGenerator {
 		}
 
 		for (int i = 0; i < tasksToAllocate.size(); i++) {
-			PeriodicTask task = tasksToAllocate.get(i);
+			PeriodicIOTask task = tasksToAllocate.get(i);
 			int target = -1;
 			double minUtil = 2;
 			for (int j = 0; j < partitions; j++) {
@@ -111,9 +111,9 @@ public class SimpleSystemGenerator {
 		return tasks;
 	}
 
-	private ArrayList<PeriodicTask> generateT() {
+	private ArrayList<PeriodicIOTask> generateT() {
 		int task_id = 1;
-		ArrayList<PeriodicTask> tasks = new ArrayList<>(total_tasks);
+		ArrayList<PeriodicIOTask> tasks = new ArrayList<>(total_tasks);
 		ArrayList<Long> periods = new ArrayList<>(total_tasks);
 
 		/* generates random periods */
@@ -185,7 +185,7 @@ public class SimpleSystemGenerator {
 			// assert (deadline <= periods.get(i));
 			// assert (computation_time < deadline);
 
-			PeriodicTask t = new PeriodicTask(-1, periods.get(i), periods.get(i), computation_time, -1, task_id, utils.get(i));
+			PeriodicIOTask t = new PeriodicIOTask(-1, periods.get(i), periods.get(i), computation_time, -1, task_id, utils.get(i));
 			task_id++;
 			tasks.add(t);
 		}
@@ -278,7 +278,7 @@ public class SimpleSystemGenerator {
 		return resources;
 	}
 
-	public ArrayList<ArrayList<PeriodicTask>> generateResourceUsage(ArrayList<PeriodicTask> tasks, ArrayList<Resource> resources) {
+	public ArrayList<ArrayList<PeriodicIOTask>> generateResourceUsage(ArrayList<PeriodicIOTask> tasks, ArrayList<Resource> resources) {
 		while (tasks == null)
 			tasks = generateTasks();
 
@@ -305,7 +305,7 @@ public class SimpleSystemGenerator {
 					break;
 				task_index = ran.nextInt(tasks.size());
 			}
-			PeriodicTask task = tasks.get(task_index);
+			PeriodicIOTask task = tasks.get(task_index);
 
 			/* Find the resources that we are going to access */
 			int number_of_requested_resource = ran.nextInt(resources.size()) + 1;
@@ -338,7 +338,7 @@ public class SimpleSystemGenerator {
 			}
 		}
 
-		ArrayList<ArrayList<PeriodicTask>> generatedTaskSets = WorstFitAllocation(tasks, total_partitions);
+		ArrayList<ArrayList<PeriodicIOTask>> generatedTaskSets = WorstFitAllocation(tasks, total_partitions);
 
 		if (generatedTaskSets != null) {
 			for (int i = 0; i < generatedTaskSets.size(); i++) {
@@ -374,7 +374,7 @@ public class SimpleSystemGenerator {
 						int ceiling = 0;
 						/* for each task in the given partition */
 						for (int k = 0; k < generatedTaskSets.get(j).size(); k++) {
-							PeriodicTask task = generatedTaskSets.get(j).get(k);
+							PeriodicIOTask task = generatedTaskSets.get(j).get(k);
 
 							if (task.resource_required_index.contains(resource.id - 1)) {
 								resource.requested_tasks.add(task);

@@ -2,13 +2,13 @@ package analysis;
 
 import java.util.ArrayList;
 import entity.Resource;
-import entity.PeriodicTask;
+import entity.PeriodicIOTask;
 import utils.AnalysisUtils;
 
 public class RTAWithoutBlocking {
 	long count = 0;
 
-	public long[][] getResponseTime(ArrayList<ArrayList<PeriodicTask>> tasks, ArrayList<Resource> resources, boolean printBebug) {
+	public long[][] getResponseTime(ArrayList<ArrayList<PeriodicIOTask>> tasks, ArrayList<Resource> resources, boolean printBebug) {
 		long[][] init_Ri = new AnalysisUtils().initResponseTime(tasks);
 		long[][] response_time = new long[tasks.size()][];
 		boolean isEqual = false, missDeadline = false;
@@ -49,14 +49,14 @@ public class RTAWithoutBlocking {
 		return response_time;
 	}
 
-	private long[][] busyWindow(ArrayList<ArrayList<PeriodicTask>> tasks, ArrayList<Resource> resources, long[][] response_time) {
+	private long[][] busyWindow(ArrayList<ArrayList<PeriodicIOTask>> tasks, ArrayList<Resource> resources, long[][] response_time) {
 		long[][] response_time_plus = new long[tasks.size()][];
 		for (int i = 0; i < response_time.length; i++)
 			response_time_plus[i] = new long[response_time[i].length];
 
 		for (int i = 0; i < tasks.size(); i++) {
 			for (int j = 0; j < tasks.get(i).size(); j++) {
-				PeriodicTask task = tasks.get(i).get(j);
+				PeriodicIOTask task = tasks.get(i).get(j);
 				task.interference = highPriorityInterference(task, tasks, response_time[i][j]);
 				response_time_plus[i][j] = task.Ri = task.WCET + task.pure_resource_execution_time + task.interference;
 				if (task.Ri > task.deadline)
@@ -71,14 +71,14 @@ public class RTAWithoutBlocking {
 	 * Calculate the local high priority tasks' interference for a given task t.
 	 * CI is a set of computation time of local tasks, including spin delay.
 	 */
-	protected long highPriorityInterference(PeriodicTask t, ArrayList<ArrayList<PeriodicTask>> allTasks, long Ri) {
+	protected long highPriorityInterference(PeriodicIOTask t, ArrayList<ArrayList<PeriodicIOTask>> allTasks, long Ri) {
 		long interference = 0;
 		int partition = t.partition;
-		ArrayList<PeriodicTask> tasks = allTasks.get(partition);
+		ArrayList<PeriodicIOTask> tasks = allTasks.get(partition);
 
 		for (int i = 0; i < tasks.size(); i++) {
 			if (tasks.get(i).priority > t.priority) {
-				PeriodicTask hpTask = tasks.get(i);
+				PeriodicIOTask hpTask = tasks.get(i);
 				interference += Math.ceil((double) (Ri) / (double) hpTask.period) * (hpTask.WCET + hpTask.pure_resource_execution_time);
 			}
 		}
