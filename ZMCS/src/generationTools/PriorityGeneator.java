@@ -7,16 +7,13 @@ import utils.AnalysisUtils;
 
 public class PriorityGeneator {
 
-	public ArrayList<ArrayList<PeriodicTask>> assignPrioritiesByDM(ArrayList<ArrayList<PeriodicTask>> tasksToAssgin) {
+	public ArrayList<PeriodicTask> assignPandQbyDMPO(ArrayList<PeriodicTask> tasksToAssgin) {
 		if (tasksToAssgin == null) {
 			return null;
 		}
 
-		ArrayList<ArrayList<PeriodicTask>> tasks = new ArrayList<>(tasksToAssgin);
-		/* For each partition, assign priorities */
-		for (int i = 0; i < tasks.size(); i++) {
-			new PriorityGeneator().deadlineMonotonicPriorityAssignment(tasks.get(i), tasks.get(i).size());
-		}
+		ArrayList<PeriodicTask> tasks = new ArrayList<>(tasksToAssgin);
+		deadlineMonotonicPriorityAssignment(tasks, tasks.size());
 
 		return tasks;
 	}
@@ -28,6 +25,7 @@ public class PriorityGeneator {
 		priorities.sort((p1, p2) -> -Integer.compare(p1, p2));
 		for (int i = 0; i < taskset.size(); i++) {
 			taskset.get(i).priority = priorities.get(i);
+			taskset.get(i).quality = priorities.get(i);
 		}
 	}
 

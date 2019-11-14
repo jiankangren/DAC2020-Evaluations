@@ -1,35 +1,31 @@
 package analysis;
 
 import java.util.ArrayList;
-import entity.Resource;
+
 import entity.PeriodicTask;
 import utils.AnalysisUtils;
 
 public class RTAWithoutBlocking {
 	long count = 0;
 
-	public long[][] getResponseTime(ArrayList<ArrayList<PeriodicTask>> tasks, ArrayList<Resource> resources, boolean printBebug) {
-		long[][] init_Ri = new AnalysisUtils().initResponseTime(tasks);
-		long[][] response_time = new long[tasks.size()][];
+	public long[] getResponseTime(ArrayList<PeriodicTask> tasks) {
+		long[] init_Ri = new AnalysisUtils().initResponseTime(tasks);
+		long[] response_time = new long[tasks.size()];
 		boolean isEqual = false, missDeadline = false;
 		count = 0;
 
-		for (int i = 0; i < init_Ri.length; i++)
-			response_time[i] = new long[init_Ri[i].length];
 		new AnalysisUtils().cloneList(init_Ri, response_time);
 
 		/* a huge busy window to get a fixed Ri */
 		while (!isEqual) {
 			isEqual = true;
-			long[][] response_time_plus = busyWindow(tasks, resources, response_time);
+			long[] response_time_plus = busyWindow(tasks, response_time);
 
 			for (int i = 0; i < response_time_plus.length; i++) {
-				for (int j = 0; j < response_time_plus[i].length; j++) {
-					if (response_time[i][j] != response_time_plus[i][j])
+					if (response_time[i] != response_time_plus[i])
 						isEqual = false;
-					if (response_time_plus[i][j] > tasks.get(i).get(j).deadline)
+					if (response_time_plus[i] > tasks.get(i).deadline)
 						missDeadline = true;
-				}
 			}
 
 			count++;
@@ -38,30 +34,20 @@ public class RTAWithoutBlocking {
 				break;
 		}
 
-		if (printBebug) {
-			if (missDeadline)
-				System.out.println("after " + count + " tims of recursion, the tasks miss the deadline.");
-			else
-				System.out.println("after " + count + " tims of recursion, we got the response time.");
-			new AnalysisUtils().printResponseTime(response_time, tasks);
-		}
-
 		return response_time;
 	}
 
-	private long[][] busyWindow(ArrayList<ArrayList<PeriodicTask>> tasks, ArrayList<Resource> resources, long[][] response_time) {
-		long[][] response_time_plus = new long[tasks.size()][];
-		for (int i = 0; i < response_time.length; i++)
-			response_time_plus[i] = new long[response_time[i].length];
+	private long[] busyWindow(ArrayList<PeriodicTask> tasks, long[] response_time) {
+		long[] response_time_plus = new long[tasks.size()];
 
 		for (int i = 0; i < tasks.size(); i++) {
-			for (int j = 0; j < tasks.get(i).size(); j++) {
-				PeriodicTask task = tasks.get(i).get(j);
-				task.interference = highPriorityInterference(task, tasks, response_time[i][j]);
-				response_time_plus[i][j] = task.Ri = task.WCET + task.pure_resource_execution_time + task.interference;
+//			for (int j = 0; j < tasks.get(i).size(); j++) {
+				PeriodicTask task = tasks.get(i);
+				long interference = highPriorityInterference(task, tasks, response_time[i]);
+				response_time_plus[i] = task.Ri = task.WCET + interference;
 				if (task.Ri > task.deadline)
 					return response_time_plus;
-			}
+//			}
 		}
 		return response_time_plus;
 
@@ -71,15 +57,13 @@ public class RTAWithoutBlocking {
 	 * Calculate the local high priority tasks' interference for a given task t.
 	 * CI is a set of computation time of local tasks, including spin delay.
 	 */
-	protected long highPriorityInterference(PeriodicTask t, ArrayList<ArrayList<PeriodicTask>> allTasks, long Ri) {
+	protected long highPriorityInterference(PeriodicTask t, ArrayList<PeriodicTask> tasks, long Ri) {
 		long interference = 0;
-		int partition = t.partition;
-		ArrayList<PeriodicTask> tasks = allTasks.get(partition);
 
 		for (int i = 0; i < tasks.size(); i++) {
 			if (tasks.get(i).priority > t.priority) {
 				PeriodicTask hpTask = tasks.get(i);
-				interference += Math.ceil((double) (Ri) / (double) hpTask.period) * (hpTask.WCET + hpTask.pure_resource_execution_time);
+				interference += Math.ceil((double) (Ri) / (double) hpTask.period) * hpTask.WCET;
 			}
 		}
 		return interference;

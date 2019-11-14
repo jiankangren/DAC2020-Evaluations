@@ -1,66 +1,37 @@
 package entity;
 
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-
 public class PeriodicTask {
-	public int priority;
+	public int id;
 	public long period;
 	public long deadline;
+	public int priority;
 	public long WCET;
-	public int partition;
-	public int id;
 	public double util;
 
-	public long pure_resource_execution_time = 0;
-	public long Ri = 0, spin = 0, interference = 0, local = 0, total = 0;
+	public long delta;
+	public double quality;
 
-	public ArrayList<Integer> resource_required_index;
-	public ArrayList<Integer> number_of_access_in_one_release;
+	public long start;
 
-	public long addition_slack_BTB = 0;
-	public long addition_slack = 0;
-	public long spin_delay_by_preemptions = 0;
-	
+	public long Ri = 0;
 
-	public PeriodicTask(int priority, long t, long d, long c, int partition, int id) {
-		this(priority, t, d, c, partition, id, -1);
+	public PeriodicTask(int p, long t, long d, long c, int id, int detla, int quality) {
+		this(p, t, d, c, id, detla, quality, -1);
 	}
 
-	public PeriodicTask(int priority, long t, long d, long c, int partition, int id, double util) {
-		this.priority = priority;
+	public PeriodicTask(int p, long t, long d, long c, int id, int detla, int quality, double util) {
+		this.priority = p;
 		this.period = t;
 		this.WCET = c;
 		this.deadline = d;
-		this.partition = partition;
 		this.id = id;
 		this.util = util;
 
-		resource_required_index = new ArrayList<>();
-		number_of_access_in_one_release = new ArrayList<>();
+		this.delta = detla;
+		this.quality = quality;
 
+		start = 0;
 		Ri = 0;
-		spin = 0;
-		interference = 0;
-		local = 0;
-		total = 0;
-	}
-
-	@Override
-	public String toString() {
-		return "T" + this.id + " : T = " + this.period + ", C = " + this.WCET + ", PRET: " + this.pure_resource_execution_time + ", spin = " + spin + ", D = "
-				+ this.deadline + ", Priority = " + this.priority + ", Partition = " + this.partition;
-	}
-
-	public String RTA() {
-		return "T" + this.id + " : R = " + this.Ri + ", S = " + this.spin + ", I = " + this.interference + ", A = " + this.local + ", Total = " + this.total
-				+ ". is schedulable: " + (Ri <= deadline);
-	}
-
-	public String getInfo() {
-		DecimalFormat df = new DecimalFormat("#.#######");
-		return "T" + this.id + " : T = " + this.period + ", C = " + this.WCET + ", PRET: " + this.pure_resource_execution_time + ", D = " + this.deadline
-				+ ", Priority = " + this.priority + ", Partition = " + this.partition + ", Util: " + Double.parseDouble(df.format(util));
 	}
 
 }

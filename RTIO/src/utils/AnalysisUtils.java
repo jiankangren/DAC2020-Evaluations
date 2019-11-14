@@ -1,91 +1,121 @@
 package utils;
 
 import java.util.ArrayList;
+import java.util.List;
 
-import entity.PeriodicIOTask;
+import entity.Job;
+import entity.PeriodicTask;
+import javafx.util.Pair;
 
 public class AnalysisUtils {
 	public static final int MAX_PRIORITY = 1000;
 
-	/* define how long the critical section can be */
-	public static enum CS_LENGTH_RANGE {
-		VERY_LONG_CSLEN, LONG_CSLEN, MEDIUM_CS_LEN, SHORT_CS_LEN, VERY_SHORT_CS_LEN, Random
-	};
+	public double getValue(Job job) {
+		double Vmin = job.task.Vmin;
+		double Vmax = job.task.Vmax;
 
-	/* define how many resources in the system */
-	public static enum RESOURCES_RANGE {
-		HALF_PARITIONS, /* partitions / 2 us */
-		PARTITIONS, /* partitions us */
-		DOUBLE_PARTITIONS, /* partitions * 2 us */
-	};
+		long start = job.startTime;
 
-	public ArrayList<ArrayList<PeriodicIOTask>> permutePartition(ArrayList<PeriodicIOTask> tasks) {
-		ArrayList<ArrayList<PeriodicIOTask>> list = new ArrayList<>();
-		backtrack(list, new ArrayList<>(), tasks);
-		return list;
+		long v1 = job.delta - job.task.theta;
+		long delta = job.delta;
+		long v2 = Math.max(delta + job.task.theta, job.deadline);
+
+		if (v1 < start && start < delta) {
+			return (Vmin - Vmax) / (v1 - delta) * (start - v1) + Vmin;
+		} else if (start == delta)
+			return Vmax;
+		else if (delta < start && start < v2)
+			return (Vmax - Vmin) / (delta - v2) * (start - v2) + Vmin;
+		else // start <= v1 || v2 <= start
+			return Vmin;
 	}
 
-	// public ArrayList<ArrayList<SporadicTask>>
-	// permuteSystem(ArrayList<SporadicTask> tasks) {
-	// ArrayList<ArrayList<SporadicTask>> list = new ArrayList<>();
-	// backtrack(list, new ArrayList<>(), tasks);
-	// return list;
-	// }
+	public Pair<List<Job>, Long> getJobsInHyperPeriod(List<PeriodicTask> tasks) {
+		Long[] periods = tasks.stream().map(t -> t.period).toArray(Long[]::new);
+		long hyperPeriod = lcm_of_array_elements(periods);
 
-	private void backtrack(ArrayList<ArrayList<PeriodicIOTask>> list, ArrayList<PeriodicIOTask> tempList, ArrayList<PeriodicIOTask> nums) {
-		if (tempList.size() == nums.size()) {
-			list.add(new ArrayList<>(tempList));
-		} else {
-			for (int i = 0; i < nums.size(); i++) {
-				if (tempList.contains(nums.get(i)))
-					continue; // element already exists, skip
-				tempList.add(nums.get(i));
-				backtrack(list, tempList, nums);
-				tempList.remove(tempList.size() - 1);
+		// System.out.println("hyper-period: " + hyperPeriod);
+
+		List<Job> jobs = new ArrayList<>();
+
+		for (int i = 0; i < tasks.size(); i++) {
+			long numberOfJobs = hyperPeriod / tasks.get(i).period;
+
+			for (int j = 0; j < numberOfJobs; j++) {
+				Job job = new Job(j, tasks.get(i));
+				jobs.add(job);
+			}
+		}
+
+		return new Pair<List<Job>, Long>(jobs, hyperPeriod);
+	}
+
+	private long lcm_of_array_elements(Long[] element_array) {
+		long lcm_of_array_elements = 1;
+		int divisor = 2;
+
+		while (true) {
+			int counter = 0;
+			boolean divisible = false;
+
+			for (int i = 0; i < element_array.length; i++) {
+				if (element_array[i] == 0) {
+					return 0;
+				} else if (element_array[i] < 0) {
+					element_array[i] = element_array[i] * (-1);
+				}
+				if (element_array[i] == 1) {
+					counter++;
+				}
+
+				if (element_array[i] % divisor == 0) {
+					divisible = true;
+					element_array[i] = element_array[i] / divisor;
+				}
+			}
+
+			if (divisible) {
+				lcm_of_array_elements = lcm_of_array_elements * divisor;
+			} else {
+				divisor++;
+			}
+
+			if (counter == element_array.length) {
+				return lcm_of_array_elements;
 			}
 		}
 	}
 
-	public long[][] initResponseTime(ArrayList<ArrayList<PeriodicIOTask>> tasks) {
-		long[][] response_times = new long[tasks.size()][];
+	public long[] initResponseTime(ArrayList<PeriodicTask> tasks) {
+		long[] response_times = new long[tasks.size()];
+
+		tasks.sort((t1, t2) -> -Integer.compare(t1.priority, t2.priority));
+		long[] Ri = new long[tasks.size()];
 
 		for (int i = 0; i < tasks.size(); i++) {
-			ArrayList<PeriodicIOTask> task_on_a_partition = tasks.get(i);
-			task_on_a_partition.sort((t1, t2) -> -Integer.compare(t1.priority, t2.priority));
 
-			long[] Ri = new long[task_on_a_partition.size()];
+			PeriodicTask t = tasks.get(i);
+			Ri[i] = t.Ri = t.WCET;
 
-			for (int j = 0; j < task_on_a_partition.size(); j++) {
-				PeriodicIOTask t = task_on_a_partition.get(j);
-				Ri[j] = t.Ri = t.WCET + t.pure_resource_execution_time;
-				t.total = 0;
-
-			}
-			response_times[i] = Ri;
 		}
 		return response_times;
 	}
 
-	public boolean isSystemSchedulable(ArrayList<ArrayList<PeriodicIOTask>> tasks, long[][] Ris) {
+	public boolean isSystemSchedulable(ArrayList<PeriodicTask> tasks, long[] Ris) {
 		for (int i = 0; i < tasks.size(); i++) {
-			for (int j = 0; j < tasks.get(i).size(); j++) {
-				if (tasks.get(i).get(j).deadline < Ris[i][j])
-					return false;
-			}
+			if (tasks.get(i).deadline < Ris[i])
+				return false;
 		}
 		return true;
 	}
 
-	public void cloneList(long[][] oldList, long[][] newList) {
+	public void cloneList(long[] oldList, long[] newList) {
 		for (int i = 0; i < oldList.length; i++) {
-			for (int j = 0; j < oldList[i].length; j++) {
-				newList[i][j] = oldList[i][j];
-			}
+			newList[i] = oldList[i];
 		}
 	}
 
 	public boolean isArrayContain(int[] array, int value) {
-
 		for (int i = 0; i < array.length; i++) {
 			if (array[i] == value)
 				return true;
@@ -93,47 +123,89 @@ public class AnalysisUtils {
 		return false;
 	}
 
-	public void printResponseTime(long[][] Ris, ArrayList<ArrayList<PeriodicIOTask>> tasks) {
+	public static void main(String[] args) {
 
-		for (int i = 0; i < Ris.length; i++) {
-			for (int j = 0; j < Ris[i].length; j++) {
-				System.out.println("T" + tasks.get(i).get(j).id + " RT: " + Ris[i][j] + ", P: " + tasks.get(i).get(j).priority + ", D: "
-						+ tasks.get(i).get(j).deadline + ", Blocking = " + tasks.get(i).get(j).total + ", WCET = " + tasks.get(i).get(j).WCET + ", Resource: "
-						+ tasks.get(i).get(j).pure_resource_execution_time);
+		List<Integer> numbers = new ArrayList<>();
 
+		for (int number = 100; number < 2000; number++) {
+			int count = 0;
+
+			for (int i = 1; i <= number; ++i) {
+				if (number % i == 0 && i >= 10)
+					count++;
+				
 			}
-			System.out.println();
-		}
-	}
-
-	public int compareSlack(PeriodicIOTask t1, PeriodicIOTask t2, boolean withBTB) {
-		long slack1 = withBTB ? t1.addition_slack_BTB : t1.addition_slack;
-		long deadline1 = t1.deadline;
-
-		long slack2 = withBTB ? t2.addition_slack_BTB : t2.addition_slack;
-		long deadline2 = t2.deadline;
-
-		if (slack1 < slack2) {
-			return -1;
+			
+			if (count >= 20)
+				numbers.add(number);
 		}
 
-		if (slack1 > slack2) {
-			return 1;
+		for (int j = 0; j < numbers.size(); j++) {
+			int number = numbers.get(j);
+			int count = 0;
+			System.out.print("Factors of " + number + " are: ");
+
+			for (int i = 1; i <= number; ++i) {
+				if (number % i == 0 && i >= 10) {
+					System.out.print(i + " ");
+					count++;
+				}
+			}
+
+			System.out.println("\n LCM: " + number + "    " + "count: " + count);
 		}
 
-		if (slack1 == slack2) {
-			if (deadline1 < deadline2)
-				return -1;
-			if (deadline1 > deadline2)
-				return 1;
-			if (deadline1 == deadline2)
-				return 0;
-		}
-
-		System.err.println(
-				"New OPA comparator error!" + " slack1:  " + slack1 + " deadline1:  " + deadline1 + " slack2:  " + slack2 + " deadline2:  " + deadline2);
-		System.exit(-1);
-		return 0;
 	}
 
 }
+
+/**
+Factors of 720 are: 10 12 15 16 18 20 24 30 36 40 45 48 60 72 80 90 120 144 180 240 360 720 
+ LCM: 720    count: 22
+Factors of 840 are: 10 12 14 15 20 21 24 28 30 35 40 42 56 60 70 84 105 120 140 168 210 280 420 840 
+ LCM: 840    count: 24
+Factors of 900 are: 10 12 15 18 20 25 30 36 45 50 60 75 90 100 150 180 225 300 450 900 
+ LCM: 900    count: 20
+Factors of 960 are: 10 12 15 16 20 24 30 32 40 48 60 64 80 96 120 160 192 240 320 480 960 
+ LCM: 960    count: 21
+Factors of 1008 are: 12 14 16 18 21 24 28 36 42 48 56 63 72 84 112 126 144 168 252 336 504 1008 
+ LCM: 1008    count: 22
+Factors of 1080 are: 10 12 15 18 20 24 27 30 36 40 45 54 60 72 90 108 120 135 180 216 270 360 540 1080 
+ LCM: 1080    count: 24
+Factors of 1200 are: 10 12 15 16 20 24 25 30 40 48 50 60 75 80 100 120 150 200 240 300 400 600 1200 
+ LCM: 1200    count: 23
+Factors of 1260 are: 10 12 14 15 18 20 21 28 30 35 36 42 45 60 63 70 84 90 105 126 140 180 210 252 315 420 630 1260 
+ LCM: 1260    count: 28
+Factors of 1320 are: 10 11 12 15 20 22 24 30 33 40 44 55 60 66 88 110 120 132 165 220 264 330 440 660 1320 
+ LCM: 1320    count: 25
+Factors of 1344 are: 12 14 16 21 24 28 32 42 48 56 64 84 96 112 168 192 224 336 448 672 1344 
+ LCM: 1344    count: 21
+Factors of 1440 are: 10 12 15 16 18 20 24 30 32 36 40 45 48 60 72 80 90 96 120 144 160 180 240 288 360 480 720 1440 
+ LCM: 1440    count: 28
+Factors of 1512 are: 12 14 18 21 24 27 28 36 42 54 56 63 72 84 108 126 168 189 216 252 378 504 756 1512 
+ LCM: 1512    count: 24
+Factors of 1560 are: 10 12 13 15 20 24 26 30 39 40 52 60 65 78 104 120 130 156 195 260 312 390 520 780 1560 
+ LCM: 1560    count: 25
+Factors of 1584 are: 11 12 16 18 22 24 33 36 44 48 66 72 88 99 132 144 176 198 264 396 528 792 1584 
+ LCM: 1584    count: 23
+Factors of 1620 are: 10 12 15 18 20 27 30 36 45 54 60 81 90 108 135 162 180 270 324 405 540 810 1620 
+ LCM: 1620    count: 23
+Factors of 1680 are: 10 12 14 15 16 20 21 24 28 30 35 40 42 48 56 60 70 80 84 105 112 120 140 168 210 240 280 336 420 560 840 1680 
+ LCM: 1680    count: 32
+Factors of 1728 are: 12 16 18 24 27 32 36 48 54 64 72 96 108 144 192 216 288 432 576 864 1728 
+ LCM: 1728    count: 21
+Factors of 1764 are: 12 14 18 21 28 36 42 49 63 84 98 126 147 196 252 294 441 588 882 1764 
+ LCM: 1764    count: 20
+Factors of 1800 are: 10 12 15 18 20 24 25 30 36 40 45 50 60 72 75 90 100 120 150 180 200 225 300 360 450 600 900 1800 
+ LCM: 1800    count: 28
+Factors of 1848 are: 11 12 14 21 22 24 28 33 42 44 56 66 77 84 88 132 154 168 231 264 308 462 616 924 1848 
+ LCM: 1848    count: 25
+Factors of 1872 are: 12 13 16 18 24 26 36 39 48 52 72 78 104 117 144 156 208 234 312 468 624 936 1872 
+ LCM: 1872    count: 23
+Factors of 1890 are: 10 14 15 18 21 27 30 35 42 45 54 63 70 90 105 126 135 189 210 270 315 378 630 945 1890 
+ LCM: 1890    count: 25
+Factors of 1920 are: 10 12 15 16 20 24 30 32 40 48 60 64 80 96 120 128 160 192 240 320 384 480 640 960 1920 
+ LCM: 1920    count: 25
+Factors of 1980 are: 10 11 12 15 18 20 22 30 33 36 44 45 55 60 66 90 99 110 132 165 180 198 220 330 396 495 660 990 1980 
+ LCM: 1980    count: 29
+ */
