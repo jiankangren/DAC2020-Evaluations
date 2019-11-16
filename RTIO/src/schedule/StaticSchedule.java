@@ -10,9 +10,9 @@ import entity.Space;
 import javafx.util.Pair;
 import utils.AnalysisUtils;
 
-public class StaticIOSchedule {
+public class StaticSchedule {
 
-	public Pair<Double, Double> schedule(List<PeriodicTask> tasks, boolean priorityFirst) {
+	public List<List<Double>> schedule(List<PeriodicTask> tasks, boolean priorityFirst) {
 		int numOfExact = 0;
 		double totalValue = 0;
 
@@ -41,9 +41,9 @@ public class StaticIOSchedule {
 		}
 
 		DecimalFormat df = new DecimalFormat("#.##");
-		totalValue = totalValue / jobs.stream().mapToDouble(j -> j.task.Vmax).sum();
-		
-		double exact = Double.parseDouble(df.format((double)numOfExact / (double)jobs.size())) ;
+		totalValue = (double) totalValue / (double) jobs.stream().mapToDouble(j -> j.task.Vmax).sum();
+
+		double exact = Double.parseDouble(df.format((double) numOfExact / (double) jobs.size()));
 		totalValue = Double.parseDouble(df.format(totalValue));
 
 		/**
@@ -68,7 +68,13 @@ public class StaticIOSchedule {
 			}
 		}
 
-		return new Pair<Double, Double>(exact, totalValue);
+		List<List<Double>> pfs = new ArrayList<>();
+		List<Double> pf = new ArrayList<>();
+		pf.add(exact);
+		pf.add(totalValue);
+		pfs.add(pf);
+
+		return pfs;
 	}
 
 	/**************************** LCCD ****************************/
@@ -81,6 +87,8 @@ public class StaticIOSchedule {
 		List<Space> spaces = getFreeSpace(allocated, toAlloc, hyperperiod);
 
 		fitAllocatableTasks(allocated, toAlloc, spaces, priorityFirst);
+
+		spaces.sort((c1, c2) -> Long.compare(c1.start, c2.start));
 
 		for (int i = 0; i < toAlloc.size(); i++) {
 			boolean result = allocJob(toAlloc.get(i), allocated, toAlloc, spaces);
@@ -144,10 +152,32 @@ public class StaticIOSchedule {
 		if (solution == null)
 			return false;
 
+		// TODO: update GA side
+
 		/*
 		 * Allocate Job by shifting the allocated jobs.
 		 */
-		job.startTime = solution.get(0).start;
+		job.startTime = Math.max(solution.get(0).start, job.releaseTime);
+		long requiredSpace = job.task.WCET;
+
+		List<Job> shifedJobs = new ArrayList<>();
+
+		for (int i = 0; i < solution.size() - 1; i++) {
+			Space s1 = solution.get(i);
+			Space s2 = solution.get(i + 1);
+
+			requiredSpace -= Math.min(solution.get(i).end, job.deadline) - Math.max(solution.get(i).start, job.releaseTime);
+
+			List<Job> jobsInBetween = getJobsInBtween(s1, s2, allocated);
+			for (int k = 0; k < jobsInBetween.size(); k++) {
+				Job shiftedJob = jobsInBetween.get(k);
+				if (!shifedJobs.contains(shiftedJob)) {
+					shiftedJob.startTime += requiredSpace;
+					shifedJobs.add(shiftedJob);
+				}
+
+			}
+		}
 
 		/*
 		 * Update task
@@ -158,17 +188,31 @@ public class StaticIOSchedule {
 		/*
 		 * Update space
 		 */
-		for (int i = 0; i < solution.size() - 1; i++) {
+		Space first = solution.get(0);
+		
+		long totalNeed = job.task.WCET - (first.end - job.startTime);
+		
+		if (first.start < job.startTime) {
+			first.end = job.startTime;
+			first.capcity = first.end - first.start;
+		} else
+			spaces.remove(first);
+		
+		
+
+		for (int i = 1; i < solution.size() - 1; i++) {
+			totalNeed -= solution.get(i).capcity;
 			spaces.remove(solution.get(i));
 		}
 
 		Space lastS = solution.get(solution.size() - 1);
-		long restRequiredSpace = job.task.WCET - solution.stream().mapToLong(s -> s.capcity).sum() + lastS.capcity;
+		
+//		long restRequiredSpace = job.task.WCET - solution.stream().mapToLong(s -> s.capcity).sum() + lastS.capcity;
 
-		if (restRequiredSpace == lastS.capcity)
+		if (totalNeed == lastS.capcity)
 			spaces.remove(lastS);
 		else {
-			lastS.start += restRequiredSpace;
+			lastS.start += totalNeed;
 			lastS.capcity = lastS.end - lastS.start;
 		}
 
@@ -183,19 +227,17 @@ public class StaticIOSchedule {
 			int index = i;
 
 			while (space < job.task.WCET && index < job.spaceInRange.size()) {
-				space += Math.min(job.deadline, job.spaceInRange.get(index).end)-Math.max(job.releaseTime, job.spaceInRange.get(index).start);
+				space += Math.min(job.deadline, job.spaceInRange.get(index).end) - Math.max(job.releaseTime, job.spaceInRange.get(index).start);
 				index++;
 			}
 
 			if (space >= job.task.WCET) {
- 				List<Space> spaces = new ArrayList<>();
+				List<Space> spaces = new ArrayList<>();
 				for (int j = i; j < index; j++) {
 					spaces.add(job.spaceInRange.get(j));
 				}
 				solutions.add(spaces);
 
-				if (spaces.size() == 1)
-					System.err.print("We have a spaces size = 1");
 			}
 		}
 
@@ -213,7 +255,7 @@ public class StaticIOSchedule {
 				Space s1 = oneSolution.get(j);
 				Space s2 = oneSolution.get(j + 1);
 
-				requiredSpace -= oneSolution.get(j).capcity;
+				requiredSpace -= Math.min(s1.end, job.deadline) - Math.max(s1.start, job.releaseTime);
 
 				List<Job> jobsInBetween = getJobsInBtween(s1, s2, allocateJobs);
 				for (int k = 0; k < jobsInBetween.size(); k++) {
@@ -226,6 +268,7 @@ public class StaticIOSchedule {
 					if (shiftedJob.delta == shiftedJob.startTime)
 						scarifice++;
 				}
+
 			}
 
 			if (!isFeasible) {
@@ -274,7 +317,7 @@ public class StaticIOSchedule {
 
 		for (int i = 0; i < toAlloc.size(); i++) {
 			Job job = toAlloc.get(i);
-			
+
 			List<Space> allowedSpaces = job.allocatableSpace;
 
 			if (allowedSpaces.size() == 0) {
@@ -283,15 +326,43 @@ public class StaticIOSchedule {
 
 			allowedSpaces.sort((s1, s2) -> compareSpace(s1, s2));
 
-			Space allocS = allowedSpaces.get(0);
-			job.startTime = allocS.start;
-			allocS.start += job.task.WCET;
-			allocS.capcity = allocS.end - allocS.start;
-			job.allocatableSpace.clear();
-
 			allocated.add(job);
 			toAlloc.remove(job);
 			i--;
+
+			// TODO: update GA side
+			Space allocS = allowedSpaces.get(0);
+			job.startTime = Math.max(allocS.start, job.releaseTime);
+			job.allocatableSpace.clear();
+
+			if (job.startTime == allocS.start) {
+				allocS.start += job.task.WCET;
+				allocS.capcity = allocS.end - allocS.start;
+			} else {
+				if (allocS.end > job.startTime + job.task.WCET) {
+					Space newSpace = new Space(job.startTime + job.task.WCET, allocS.end);
+					spaces.add(newSpace);
+
+					for (int j = 0; j < allocS.allocatableJobs.size(); j++) {
+						Job jj = allocS.allocatableJobs.get(j);
+
+						if (newSpace.end <= jj.releaseTime || newSpace.start >= jj.deadline)
+							continue;
+
+						long possibleStart = Math.max(newSpace.start, jj.releaseTime);
+						long possibleEnd = Math.min(newSpace.end, jj.deadline);
+
+						if (possibleEnd - possibleStart >= jj.task.WCET) {
+							newSpace.allocatableJobs.add(jj);
+							jj.allocatableSpace.add(newSpace);
+						}
+
+					}
+				}
+
+				allocS.end = job.startTime;
+				allocS.capcity = allocS.end - allocS.start;
+			}
 
 			if (allocS.start < allocS.end) {
 				allocS.allocatableJobs.remove(job);
@@ -312,6 +383,7 @@ public class StaticIOSchedule {
 					if (!canAlloc) {
 						waitingJob.allocatableSpace.remove(allocS);
 						allocS.allocatableJobs.remove(waitingJob);
+						j--;
 					}
 				}
 			} else {
@@ -322,6 +394,7 @@ public class StaticIOSchedule {
 				allocS.allocatableJobs.clear();
 				spaces.remove(allocS);
 			}
+
 		}
 	}
 
@@ -388,7 +461,6 @@ public class StaticIOSchedule {
 	}
 
 	private int comparatorForCandP(Job j1, Job j2, boolean deadlineFirst) {
-
 		if (!deadlineFirst) {
 			int result = -Long.compare(j1.task.WCET, j2.task.WCET);
 
@@ -399,7 +471,6 @@ public class StaticIOSchedule {
 		} else {
 			return -Long.compare(j1.task.priority, j2.task.priority);
 		}
-
 	}
 
 	/**************************** LCCD End ****************************/

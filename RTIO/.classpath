@@ -2,5 +2,13 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="C:/Program Files/GLPK/glpk-4.65/w64/glpk-java.jar" sourcepath="C:/Program Files/GLPK/glpk-4.65/w64/glpk-java-sources.jar">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="C:/Program Files/GLPK/glpk-4.65/w64"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Program Files/GLPK/glpk-4.65/w64/glpk-java-javadoc.jar"/>
+	<classpathentry kind="lib" path="C:/Program Files/GLPK/glpk-4.65/w64/glpk-java-sources.jar"/>
+	<classpathentry kind="lib" path="E:/workspace/DAC2020 Results/RTIO/lib/commons-math3-3.6.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
