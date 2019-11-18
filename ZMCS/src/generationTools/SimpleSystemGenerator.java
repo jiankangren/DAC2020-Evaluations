@@ -1,11 +1,13 @@
 package generationTools;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import entity.PeriodicTask;
 
 public class SimpleSystemGenerator {
+	
 	public boolean isLogUni;
 	public int maxT;
 	public int minT;
@@ -18,7 +20,7 @@ public class SimpleSystemGenerator {
 	public SimpleSystemGenerator(int minT, int maxT, int totalTasks, boolean isPeriodLogUni, int seed) {
 		this.minT = minT;
 		this.maxT = maxT;
-		this.totalUtil = 0.1 * (double) totalTasks;
+		this.totalUtil = 0.05 * (double) totalTasks;
 		this.total_tasks = totalTasks;
 		this.isLogUni = isPeriodLogUni;
 		this.print = false;
@@ -33,8 +35,6 @@ public class SimpleSystemGenerator {
 		ArrayList<PeriodicTask> tasks = null;
 		while (tasks == null) {
 			tasks = generateT();
-			if (tasks != null)
-				tasks = null;
 		}
 		return tasks;
 	}
@@ -47,7 +47,7 @@ public class SimpleSystemGenerator {
 		/* generates random periods */
 		while (true) {
 			if (!isLogUni) {
-				long period = (ran.nextInt(maxT - minT) + minT) * 1000;
+				long period = (ran.nextInt(maxT - minT) + minT) * 10;
 				if (!periods.contains(period))
 					periods.add(period);
 			} else {
@@ -61,7 +61,7 @@ public class SimpleSystemGenerator {
 				result = Math.max(minT, result);
 				result = Math.min(maxT, result);
 
-				long period = result * 1000;
+				long period = result * 10;
 				if (!periods.contains(period))
 					periods.add(period);
 			}
@@ -103,15 +103,44 @@ public class SimpleSystemGenerator {
 				return null;
 			}
 
-			PeriodicTask t = new PeriodicTask(-1, periods.get(i), periods.get(i), computation_time,  task_id, -1, -1, utils.get(i));
+			PeriodicTask t = new PeriodicTask(-1, periods.get(i), periods.get(i), computation_time, -1, task_id, utils.get(i));
 			task_id++;
 			tasks.add(t);
 		}
-		
+
 		new PriorityGeneator().assignPandQbyDMPO(tasks);
 		tasks.sort((p1, p2) -> -Double.compare(p1.util, p2.util));
+
+		// assign criticality level
+		int numberOfLowTasks = tasks.size() / 2;
+
+		List<PeriodicTask> lowTaks = new ArrayList<>();
+
+		for (int i = 0; i < numberOfLowTasks; i++) {
+			int index = ran.nextInt(tasks.size());
+			PeriodicTask t = tasks.get(index);
+			t.criticaility = 0;
+			tasks.remove(t);
+			lowTaks.add(t);
+		}
 		
-		return tasks;
+		for(int i=0; i<tasks.size();i++)
+			tasks.get(i).criticaility = 1;
+
+		// generate dependency
+		for (int i = 0; i < tasks.size(); i++) {
+			PeriodicTask HT = tasks.get(i);
+			if (ran.nextDouble() < 0.2) {
+				PeriodicTask LT = lowTaks.get(ran.nextInt(lowTaks.size()));
+				HT.dependencyTask = LT;
+			}
+		}
+		
+		ArrayList<PeriodicTask> allTasks = new ArrayList<>();
+		allTasks.addAll(tasks);
+		allTasks.addAll(lowTaks);
+
+		return allTasks;
 	}
 
 }

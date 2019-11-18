@@ -18,7 +18,7 @@ public class GASchedule {
 
 	int population = 500;
 	int iteration = 300;
-	double mutationRate = 0.2;
+	double mutationRate = 0.5;
 	int TOURNAMENT_SIZE = 3;
 
 	public List<List<Double>> schedule(List<PeriodicTask> tasks, Random rng) {

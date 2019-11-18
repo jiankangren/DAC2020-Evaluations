@@ -1,28 +1,26 @@
 package utils;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import entity.PeriodicTask;
 
 public class AnalysisUtils {
 	public static final int MAX_PRIORITY = 1000;
 
-	public long[] initResponseTime(ArrayList<PeriodicTask> tasks) {
+	public long[] initResponseTime(List<PeriodicTask> tasks, int mode) {
 		long[] response_times = new long[tasks.size()];
 
 		tasks.sort((t1, t2) -> -Integer.compare(t1.priority, t2.priority));
 		long[] Ri = new long[tasks.size()];
 
 		for (int i = 0; i < tasks.size(); i++) {
-
 			PeriodicTask t = tasks.get(i);
-			Ri[i] = t.Ri = t.WCET;
-
+			Ri[i] = t.Ri = t.getWCET(mode);
 		}
 		return response_times;
 	}
 
-	public boolean isSystemSchedulable(ArrayList<PeriodicTask> tasks, long[] Ris) {
+	public boolean isSystemSchedulable(List<PeriodicTask> tasks, long[] Ris) {
 		for (int i = 0; i < tasks.size(); i++) {
 			if (tasks.get(i).deadline < Ris[i])
 				return false;

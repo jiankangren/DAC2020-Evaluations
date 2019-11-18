@@ -1,6 +1,5 @@
 package ga;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -119,9 +118,8 @@ public class FitnessFunction {
 
 		double exact = finalJobs.size() - numOfExact;
 
-//		DecimalFormat df = new DecimalFormat("#.##");
+		// DecimalFormat df = new DecimalFormat("#.##");
 		totalValue = finalJobs.stream().mapToDouble(j -> j.task.Vmax).sum() - totalValue;
-		
 
 		// update configuration
 		for (int i = 0; i < allJobs.size(); i++) {
@@ -142,16 +140,16 @@ public class FitnessFunction {
 
 		fitAllocatableTasks(allocated, toAlloc, spaces);
 
-		// spaces.sort((s1, s2) -> Long.compare(s1.start, s2.start));
-
-		for (int i = 0; i < toAlloc.size(); i++) {
-			boolean result = allocJob(toAlloc.get(i), allocated, toAlloc, spaces);
-
-			if (!result)
-				return null;
-			else
-				i--;
-		}
+//		spaces.sort((s1, s2) -> Long.compare(s1.start, s2.start));
+//
+//		for (int i = 0; i < toAlloc.size(); i++) {
+//			boolean result = allocJob(toAlloc.get(i), allocated, toAlloc, spaces);
+//
+//			if (!result)
+//				return null;
+//			else
+//				i--;
+//		}
 
 		if (toAlloc.size() > 0) {
 			return null;

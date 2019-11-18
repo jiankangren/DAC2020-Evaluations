@@ -25,7 +25,6 @@ public class PriorityGeneator {
 		priorities.sort((p1, p2) -> -Integer.compare(p1, p2));
 		for (int i = 0; i < taskset.size(); i++) {
 			taskset.get(i).priority = priorities.get(i);
-			taskset.get(i).quality = priorities.get(i);
 		}
 	}
 
