@@ -13,18 +13,18 @@ import generationTools.SimpleSystemGenerator;
 
 public class AllExperiments {
 
-	static int minT = 10;
-	static int maxT = 500;
+	static int minT = 1;
+	static int maxT = 100;
 	static boolean isPeriodLogUni = true;
 	static int seed = 10;
 	static int NoS = 10000;
 
 	static double HVSpeedup = 0.1;
-	static double taskSpeedup = 1 - 0.129;  // max 23.2
+	static double taskSpeedup = 1 - 0.165;  // max 23.2
 	static double SASpeedup = 0.1;
 
-	public static int compuationHV = 20;
-	public static int periodHV = 200;
+	public static int compuationHV = 2;
+	public static int periodHV = 20;
 	public static int computationSA = 1;
 
 	public static void main(String args[]) {

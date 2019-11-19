@@ -27,8 +27,8 @@ public class compareAllMethods {
 	static int NoS = 1000;
 
 	public static void main(String args[]) {
-//		 EP1_SchedulabilityTest();
-		EP2_IOPerformance();
+		 EP1_SchedulabilityTest();
+//		EP2_IOPerformance();
 
 	}
 
@@ -39,7 +39,7 @@ public class compareAllMethods {
 		List<Integer> static_sched = new ArrayList<>();
 		List<Integer> ga_sched = new ArrayList<>();
 
-		for (int NoT = 19; NoT <= 20; NoT++) {
+		for (int NoT = 4; NoT <= 18; NoT++) {
 			SimpleSystemGenerator generator = new SimpleSystemGenerator(minT, maxT, LCM, NoT, NoT * 0.05, isPeriodLogUni, valueRange, seed, true);
 
 			int best_schedulables = 0;

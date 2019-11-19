@@ -102,7 +102,7 @@ public class MOEAD {
 		for (int n = 0; n < populationSize; n++) {
 			double a = 1.0 * n / (populationSize - 1);
 
-			lambda.add(new double[] { a, 1 - a });
+			lambda.add(new double[] { 0, 1});
 		}
 		return;
 	}

@@ -36,6 +36,11 @@ public class GPIOCP {
 				return null;
 			}
 		}
+		
+		// check correctness
+		for(int i=0; i<jobs.size();i++) {
+			
+		}
 
 		// get fitness
 		DecimalFormat df = new DecimalFormat("#.##");
