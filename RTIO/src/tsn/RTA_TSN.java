@@ -16,11 +16,6 @@ public class RTA_TSN {
 	 */
 	public boolean schedulabilityTest(int[][] packets) {
 		/*
-		 * Sort by P_i, decreasing
-		 */
-		Arrays.sort(packets, (a, b) -> -Double.compare(a[3], b[3]));
-
-		/*
 		 * Get sub-packets by MTU.
 		 */
 		ArrayList<ArrayList<int[]>> subPackets = getSubPackets(packets);
@@ -38,15 +33,10 @@ public class RTA_TSN {
 	 * packets.
 	 * 
 	 * @param packets
-	 *            parameters: [C_i, T_i, D_i£¬ P_i]
+	 *            parameters: [C_i, T_i, D_iï¿½ï¿½ P_i]
 	 * @return response time of each packet
 	 */
 	public long[] ResponseTimeAnalysis(int[][] packets) {
-		/*
-		 * Sort by P_i, decreasing
-		 */
-		Arrays.sort(packets, (a, b) -> -Double.compare(a[3], b[3]));
-
 		/*
 		 * Get sub-packets by MTU.
 		 */
@@ -154,7 +144,7 @@ public class RTA_TSN {
 				while (!isEqual) {
 					isEqual = true;
 
-					long newR = getW(R, B, P, packetID, subPacketID, subPackets);
+					long newR = getW(R, B, P, packetID, subPacketID, subPackets, i);
 
 					if (newR != R)
 						isEqual = false;
@@ -200,7 +190,7 @@ public class RTA_TSN {
 		return maxC;
 	}
 
-	private long getW(long R, long B, int p, int packetID, int subPacketID, ArrayList<ArrayList<int[]>> subPackets) {
+	private long getW(long R, long B, int p, int packetID, int subPacketID, ArrayList<ArrayList<int[]>> subPackets, int index) {
 		/*
 		 * delay from its previous sub-packets
 		 */
@@ -214,13 +204,15 @@ public class RTA_TSN {
 		 */
 		long interference = 0;
 		for (int i = 0; i < subPackets.size(); i++) {
-			for (int j = 0; j < subPackets.get(i).size(); j++) {
-				int C = subPackets.get(i).get(j)[2];
-				int T = subPackets.get(i).get(j)[3];
-				int P = subPackets.get(i).get(j)[5];
-				int J = subPackets.get(i).get(j)[6];
-				if (P > p) {
-					interference += Math.ceil((double) (R + J) / (double) T) * C;
+			if(i != index) {
+				for (int j = 0; j < subPackets.get(i).size(); j++) {
+					int C = subPackets.get(i).get(j)[2];
+					int T = subPackets.get(i).get(j)[3];
+					int P = subPackets.get(i).get(j)[5];
+					int J = subPackets.get(i).get(j)[6];
+					if (P >= p) {
+						interference += Math.ceil((double) (R + J) / (double) T) * C;
+					}
 				}
 			}
 		}
