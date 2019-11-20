@@ -14,7 +14,7 @@ import generationTools.SimpleSystemGenerator;
 public class AllExperiments {
 
 	static int minT = 10;
-	static int maxT = 500;
+	static int maxT = 1000;
 	static boolean isPeriodLogUni = true;
 	static int seed = 10;
 	static int NoS = 10000;

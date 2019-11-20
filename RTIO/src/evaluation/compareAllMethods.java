@@ -27,8 +27,8 @@ public class compareAllMethods {
 	static int NoS = 1000;
 
 	public static void main(String args[]) {
-		 EP1_SchedulabilityTest();
-//		EP2_IOPerformance();
+		// EP1_SchedulabilityTest();
+		EP2_IOPerformance();
 
 	}
 
@@ -96,12 +96,13 @@ public class compareAllMethods {
 	}
 
 	public static void EP2_IOPerformance() {
+		int max = 1000;
 		List<List<Result>> fps = new ArrayList<>();
 		List<List<Result>> gpiocp = new ArrayList<>();
 		List<List<Result>> stat = new ArrayList<>();
 		List<List<Result>> ga = new ArrayList<>();
 
-		for (int NoT = 8; NoT <= 16; NoT += 2) {
+		for (int NoT = 6; NoT <= 14; NoT += 2) {
 			SimpleSystemGenerator generator = new SimpleSystemGenerator(minT, maxT, LCM, NoT, NoT * 0.05, isPeriodLogUni, valueRange, seed, true);
 
 			List<Result> fps_res = new ArrayList<>();
@@ -110,37 +111,40 @@ public class compareAllMethods {
 			List<Result> ga_res = new ArrayList<>();
 
 			int count = 0;
+			int countMax = 0;
 
-			while (count < NoS) {
-				System.out.println("NoT: " + NoT + " times: " + count);
+			while (count < 100) {
+				System.out.println("NoT: " + NoT + " times: " + count + " count max: " + countMax);
+				
 
 				List<PeriodicTask> tasks = generator.generateTasks();
 
 				List<List<Double>> result_best = new FPS_Schedule().schedule(tasks);
-				if (result_best != null) {
+				if (result_best != null && fps_res.size()< max) {
 					Result res = new Result(result_best);
 					fps_res.add(res);
 				}
 
 				List<List<Double>> result_gpiocp = new GPIOCP().schedule(tasks);
-				if (result_gpiocp != null) {
+				if (result_gpiocp != null && gpiocp_res.size() < max) {
 					Result res = new Result(result_gpiocp);
 					gpiocp_res.add(res);
 				}
 
 				List<List<Double>> result_static = new StaticSchedule().schedule(tasks, true);
-				if (result_static != null) {
+				if (result_static != null && stat_res.size()< max) {
 					Result res = new Result(result_static);
 					stat_res.add(res);
 				}
 
-				List<List<Double>> result_ga = new GASchedule().schedule(tasks, new Random(seed));
-				if (result_ga != null) {
-					Result res = new Result(result_ga);
-					ga_res.add(res);
-				}
+//				List<List<Double>> result_ga = new GASchedule().schedule(tasks, new Random(seed));
+//				if (result_ga != null && ga_res.size() < 1000) {
+//					Result res = new Result(result_ga);
+//					ga_res.add(res);
+//				}
 
-				count++;
+				count = Math.min(Math.min(fps_res.size(), gpiocp_res.size()), stat_res.size());
+				countMax = Math.max(Math.max(fps_res.size(), gpiocp_res.size()), Math.max(stat_res.size(), ga_res.size()));
 			}
 
 			fps.add(fps_res);
@@ -167,7 +171,7 @@ public class compareAllMethods {
 			List<Double> gpiocp1Res = flatList(gpiocp1, 0);
 			List<Double> static1Res = flatList(static1, 0);
 			List<Double> ga1Res = flatList(ga1, 0);
-			
+
 			List<Double> fps2Res = flatList(fps1, 1);
 			List<Double> gpiocp2Res = flatList(gpiocp1, 1);
 			List<Double> static2Res = flatList(static1, 1);
@@ -177,7 +181,7 @@ public class compareAllMethods {
 			oneSettingNum.add(gpiocp1Res);
 			oneSettingNum.add(static1Res);
 			oneSettingNum.add(ga1Res);
-			
+
 			oneSettingVal.add(fps2Res);
 			oneSettingVal.add(gpiocp2Res);
 			oneSettingVal.add(static2Res);
@@ -186,33 +190,33 @@ public class compareAllMethods {
 			numOfExacts.add(oneSettingNum);
 			values.add(oneSettingVal);
 		}
-		
+
 		System.out.println("Number of exact jobs");
-		for(int i=0; i<numOfExacts.size();i++) {
+		for (int i = 0; i < numOfExacts.size(); i++) {
 			System.out.println("For one NoT Setting: ");
 			List<List<Double>> oneSetting = numOfExacts.get(i);
-			
-			for(int j=0;j<oneSetting.size();j++) {
-				for(int k=0; k< oneSetting.get(j).size();k++) {
+
+			for (int j = 0; j < oneSetting.size(); j++) {
+				for (int k = 0; k < oneSetting.get(j).size(); k++) {
 					System.out.print(oneSetting.get(j).get(k) + " ");
 				}
 				System.out.println();
 			}
-			
+
 		}
-		
+
 		System.out.println("\n\n Values");
-		for(int i=0; i<values.size();i++) {
+		for (int i = 0; i < values.size(); i++) {
 			System.out.println("For one NoT Setting: ");
 			List<List<Double>> oneSetting = values.get(i);
-			
-			for(int j=0;j<oneSetting.size();j++) {
-				for(int k=0; k< oneSetting.get(j).size();k++) {
+
+			for (int j = 0; j < oneSetting.size(); j++) {
+				for (int k = 0; k < oneSetting.get(j).size(); k++) {
 					System.out.print(oneSetting.get(j).get(k) + " ");
 				}
 				System.out.println();
 			}
-			
+
 		}
 
 	}
