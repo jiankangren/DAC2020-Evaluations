@@ -1,43 +1,36 @@
 package tsn;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
-import entity.PeriodicTask;
-import generationTools.SimpleSystemGenerator;
-
 public class Run_RTA_TSN {
 
 	public static void main(String args[]) {
 
-		int schedulableCount = 0;
+		long t1 = System.currentTimeMillis();
 
-		SimpleSystemGenerator generator = new SimpleSystemGenerator(1, 1000, -1, 5, 1.0, true, 0.5, 1, false);
+		for (int i = 0; i < 100000; i++) {
+			int[][] taskParameters = new int[13][];
+			taskParameters[0] = new int[] { 267, 1000, 591, 12, 3 };
+			taskParameters[1] = new int[] { 90, 1000, 695, 11, 1 };
+			taskParameters[2] = new int[] { 120, 1000, 1000, 10, 2 };
+			taskParameters[3] = new int[] { 120, 1000, 1000, 9, 2 };
+			taskParameters[4] = new int[] { 120, 1000, 1000, 8, 2 };
+			taskParameters[5] = new int[] { 48, 2000, 1203, 7, 1 };
+			taskParameters[6] = new int[] { 5, 2000, 1967, 6, 1 };
+			taskParameters[7] = new int[] { 532, 20000, 19801, 5, 6 };
+			taskParameters[8] = new int[] { 1167, 50000, 25461, 4, 12 };
+			taskParameters[9] = new int[] { 9247, 50000, 30622, 3, 93 };
+			taskParameters[10] = new int[] { 2270, 100000, 72214, 2, 23 };
+			taskParameters[11] = new int[] { 178414, 1000000, 649194, 1, 1785 };
+			taskParameters[12] = new int[] { 82631, 1000000, 732163, 0, 827 };
 
-		for (int s = 0; s < 1000; s++) {
-			ArrayList<PeriodicTask> tasks = generator.generateTasks();
+			boolean isSchedulable = new RTA_TSN().schedulabilityTest(taskParameters);
 
-			int[][] taskParameters = new int[tasks.size()][];
-			for (int i = 0; i < taskParameters.length; i++) {
-				int[] parameter = new int[5];
-				parameter[0] = (int) tasks.get(i).WCET;
-				parameter[1] = (int) tasks.get(i).period;
-				parameter[2] = (int) tasks.get(i).deadline;
-				parameter[3] = (int) tasks.get(i).priority;
-				parameter[4] = (int) tasks.get(i).WCET;
-
-				taskParameters[i] = parameter;
-
-				System.out.println(Arrays.toString(parameter));
-			}
-
-			boolean schedulable = new RTA_TSN().schedulabilityTest(taskParameters);
-
-			if (schedulable)
-				schedulableCount++;
-
-			System.out.println("is schedulable: " + schedulable + "\n");
+			if (i % 1000 == 0)
+				System.out.println(i);
 		}
-		System.out.println(schedulableCount);
+
+		long t2 = System.currentTimeMillis() - t1;
+
+		System.out.println("time: " + ((double) t2 / (double) 1000));
+
 	}
 }
