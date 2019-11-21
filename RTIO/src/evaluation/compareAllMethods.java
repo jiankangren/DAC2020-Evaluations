@@ -113,37 +113,46 @@ public class compareAllMethods {
 			int count = 0;
 			int countMax = 0;
 
-			while (count < 100) {
-				System.out.println("NoT: " + NoT + " times: " + count + " count max: " + countMax);
-				
+			while (count < 1000) {
+				System.out.println("NoT: " + NoT + " times: " + count + " count max: " + countMax + ", " + fps_res.size() + " " + gpiocp_res.size() + " "
+						+ stat_res.size() + " " + ga_res.size());
 
 				List<PeriodicTask> tasks = generator.generateTasks();
 
-				List<List<Double>> result_best = new FPS_Schedule().schedule(tasks);
-				if (result_best != null && fps_res.size()< max) {
-					Result res = new Result(result_best);
-					fps_res.add(res);
+				if (fps_res.size() < max) {
+					List<List<Double>> result_best = new FPS_Schedule().schedule(tasks);
+					if (result_best != null) {
+						Result res = new Result(result_best);
+						fps_res.add(res);
+					}
+
 				}
 
-				List<List<Double>> result_gpiocp = new GPIOCP().schedule(tasks);
-				if (result_gpiocp != null && gpiocp_res.size() < max) {
-					Result res = new Result(result_gpiocp);
-					gpiocp_res.add(res);
+				if (gpiocp_res.size() < max) {
+					List<List<Double>> result_gpiocp = new GPIOCP().schedule(tasks);
+					if (result_gpiocp != null) {
+						Result res = new Result(result_gpiocp);
+						gpiocp_res.add(res);
+					}
 				}
 
-				List<List<Double>> result_static = new StaticSchedule().schedule(tasks, true);
-				if (result_static != null && stat_res.size()< max) {
-					Result res = new Result(result_static);
-					stat_res.add(res);
+				if (stat_res.size() < max) {
+					List<List<Double>> result_static = new StaticSchedule().schedule(tasks, true);
+					if (result_static != null) {
+						Result res = new Result(result_static);
+						stat_res.add(res);
+					}
 				}
 
-//				List<List<Double>> result_ga = new GASchedule().schedule(tasks, new Random(seed));
-//				if (result_ga != null && ga_res.size() < 1000) {
-//					Result res = new Result(result_ga);
-//					ga_res.add(res);
-//				}
+				if (ga_res.size() < max) {
+					List<List<Double>> result_ga = new GASchedule().schedule(tasks, new Random(seed));
+					if (result_ga != null) {
+						Result res = new Result(result_ga);
+						ga_res.add(res);
+					}
+				}
 
-				count = Math.min(Math.min(fps_res.size(), gpiocp_res.size()), stat_res.size());
+				count = Math.min(Math.min(fps_res.size(), gpiocp_res.size()), Math.min(stat_res.size(), ga_res.size()));
 				countMax = Math.max(Math.max(fps_res.size(), gpiocp_res.size()), Math.max(stat_res.size(), ga_res.size()));
 			}
 
